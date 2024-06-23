@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Data</title>
+    <style>
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Real-time Data</h1>
+    <div class="chart-container">
+        <canvas id="chart1"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="chart2"></canvas>
+    </div>
+    <script>
+        const ctx1 = document.getElementById('chart1').getContext('2d');
+        const ctx2 = document.getElementById('chart2').getContext('2d');
+
+        function initializeThresholdLine(threshold, length) {
+            return Array(length).fill(threshold);
+        }
+
+        const chart1 = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Height (cm)',
+                    data: [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }, {
+                    label: 'Threshold',
+                    data: [],
+                    borderColor: 'rgba(225, 0, 0, 1)',
+                    borderWidth: 1,
+                    fill: false,
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Time (s)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        title: {
+                            display: true,
+                            text: 'Height (cm)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const chart2 = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Pressure (Pa)',
+                    data: [],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Time (s)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        title: {
+                            display: true,
+                            text: 'Pressure (Pa)'
+                        }
+                    }
+                }
+            }
+        });
+
+        function fetchData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    chart1.data.labels = data.timestamps;
+                    chart1.data.datasets[0].data = data.heights;
+
+                    chart1.data.datasets[1].data = initializeThresholdLine(data.threshold, data.timestamps.length);
+                    console.log('threshold line data:', chart1.data.datasets[1].data);
+
+                    chart1.update();
+
+                    chart2.data.labels = data.timestamps;
+                    chart2.data.datasets[0].data = data.pressures;
+                    chart2.update();
+                });
+        }
+
+        setInterval(fetchData, 100);
+    </script>
+</body>
+</html>
